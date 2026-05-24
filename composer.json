@@ -1,0 +1,9 @@
+{
+    "name": "your/hrms",
+    "description": "HRMS Application",
+    "type": "project",
+    "require": {
+        "php": "^8.2",
+        "laravel/framework": "^10.0"
+    }
+}
