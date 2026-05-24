@@ -12,21 +12,33 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Copy everything
+# Copy application files
 COPY . .
 
-# Install dependencies if composer.json exists
+# Install PHP dependencies (if composer.json exists)
 RUN if [ -f composer.json ]; then \
         composer install --no-interaction --no-dev --optimize-autoloader; \
     fi
 
-# Set Apache DocumentRoot to Laravel's public directory
-RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
-
-# Create required directories and set permissions
+# Create required Laravel directories and set permissions
 RUN mkdir -p storage bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 755 storage bootstrap/cache
+
+# Configure Apache virtual host to serve Laravel's public directory
+RUN echo '<VirtualHost *:80>
+    ServerAdmin webmaster@localhost
+    DocumentRoot /var/www/html/public
+
+    <Directory /var/www/html/public>
+        Options -Indexes +FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
 EXPOSE 80
 
